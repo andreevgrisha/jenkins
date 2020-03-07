@@ -1,0 +1,25 @@
+node {
+    def jenkstest
+    def imagetag = "grilab.io:8085/jenktest:latest"
+
+    stage('Clone repo') {
+          checkout([$class: 'GitSCM', 
+          branches: [[name: '*/master']],
+          userRemoteConfigs: [[credentialsId: 'local_gitlab_cred',
+          url: 'http://grilab.io/andreevgrisha/jenkins_test.git/']]])
+    }
+
+    stage('Build docker image') {
+          jenkstest = docker.build("${imagetag}")
+    }
+
+    stage('Push image to Nexus') {
+          docker.withRegistry('http://grilab.io:8085', 'local_nexus_cred') {
+            jenkstest.push()
+          }
+    }
+
+    stage('Clean workspace') {
+      sh "docker rmi ${imagetag}"
+    }
+}
