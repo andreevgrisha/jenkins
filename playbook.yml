@@ -1,0 +1,9 @@
+---
+# Playbook for run and configure Jenkins
+
+- hosts: grilab.io
+  connection: local
+  become: yes
+
+  tasks:
+      - name: 
