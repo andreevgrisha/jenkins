@@ -6,4 +6,75 @@
   become: yes
 
   tasks:
-      - name: 
+      - name: check java
+        package:
+            name: java-1.8.0-openjdk-devel
+            state: present 
+
+      - name: add jenkins repo key
+        rpm_key:
+            key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+            state: present
+
+      - name: add jenkins repo
+        get_url:
+            url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+            dest: /etc/yum.repos.d/jenkins.repo
+            group: root
+            owner: root
+            mode: 0644
+        
+      - name: enable jenkins repo
+        ini_file:
+            dest: /etc/yum.repos.d/jenkins.repo
+            section: jenkins
+            option: enabled
+            volume: 0
+
+      - name: install jenkins
+        package:
+            name: jenkins
+            state: present
+
+      - name: set jenkins in work state
+        service:
+            name: jenkins
+            state: started
+            enabled: true
+
+      - name: change jenkins port to 8090
+        lineinfile:
+            path: /etc/sysconfig/jenkins
+            regexp: '^JENKINS_PORT=8080'
+            line: JENKINS_PORT="8090"
+            backrefs: yes
+        notify: restart jenkins
+
+      - name: allow 8090 port
+        firewalld:
+            port: 8090/tcp
+            permanent: yes
+            state: enabled
+        notify: reload firewall
+
+      - name: restore jenkins configurations
+        service:
+            name: jenkins
+            state: stoped
+        notify:
+            - restore jenkins
+            - restart jenkins
+
+  handlers:
+
+      - name: reload firewall
+        command: firewall-cmd --reload
+
+      - name: restore jenkins
+        unarchive:
+            src: jenkins_xml.tar
+            dest: /var/lib/jenkins
+
+      - name: restart jenkins
+            service: jenkins
+            state: restarted
