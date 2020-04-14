@@ -26,10 +26,10 @@
         
       - name: enable jenkins repo
         ini_file:
-            dest: /etc/yum.repos.d/jenkins.repo
+            path: /etc/yum.repos.d/jenkins.repo
             section: jenkins
             option: enabled
-            volume: 0
+            value: 1
 
       - name: install jenkins
         package:
@@ -45,7 +45,7 @@
       - name: change jenkins port to 8090
         lineinfile:
             path: /etc/sysconfig/jenkins
-            regexp: '^JENKINS_PORT=8080'
+            regexp: '^JENKINS_PORT='
             line: JENKINS_PORT="8090"
             backrefs: yes
         notify: restart jenkins
@@ -65,6 +65,7 @@
             - restore jenkins
             - restart jenkins
 
+
   handlers:
 
       - name: reload firewall
@@ -76,5 +77,6 @@
             dest: /var/lib/jenkins
 
       - name: restart jenkins
-            service: jenkins
+        service: 
+            name: jenkins
             state: restarted
